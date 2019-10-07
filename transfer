@@ -1,0 +1,598 @@
+<!--
+ * @Descripttion: Vincent
+ * @version: v1.0
+ * @Author: Edwin_蔡
+ * @Date: 2019-08-25 22:49:46
+ * @LastEditors: edwin.ccx@126.com
+ * @LastEditTime: 2019-08-26 09:41:32
+ * @description: 
+ -->
+<template>
+<div class="box">
+    <div class="personalization">
+        <table cellspacing="0" cellpadding="0" border="0" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th width="40%">
+                        <div class="ivu-table-cell list-title-box">
+                            <table cellspacing="0" cellpadding="0" border="0" style="width: 100%;">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div style="text-align:left;">
+                                                <el-checkbox v-model="leftCheckAll" @change="handleCheckedLeftChange">
+                                                {{leftData.title}}
+                                                </el-checkbox>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="text-align:right;">
+                                                <span>
+                                                {{leftInfo.length}}/{{leftData.list.length}}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </th>
+                    <th></th>
+                    <th width="40%">
+                        <div class="ivu-table-cell list-title-box">
+                            <table cellspacing="0" cellpadding="0" border="0" style="width: 100%;">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div style="text-align:left;">
+                                                <el-checkbox v-model="rightCheckAll" @change="handleCheckedRightChange">
+                                                {{rightData.title}}
+                                                </el-checkbox>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="text-align:right;">
+                                                <span>
+                                                {{rightInfo.length}}/{{rightData.list.length}}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="list-items-box">
+                            <table cellspacing="0" cellpadding="0" border="0" style="width: 100%;">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div style="text-align:left;">
+                                                <div v-for="item in leftData.list">
+                                                    <el-checkbox-group v-model="leftInfo">
+                                                        <el-checkbox :label="item" :key="item" :value="item">
+                                                        {{item}}
+                                                        </el-checkbox>
+                                                    </el-checkbox-group>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="towards-input">
+                            <el-input v-model="input"  placeholder="请输入内容"></el-input>
+                        </div>
+                        <div :class="{'towards-left':true,'towards-active':rightInfo.length>0}" @click="towardsLeft()">
+                            <i class="el-icon-d-arrow-left"></i>
+                        </div> 
+                        <div :class="{'towards-right':true,'towards-active':leftInfo.length>0}" @click="towardsRight()">
+                            <i class="el-icon-d-arrow-right"></i>
+                        </div>
+                        <div :class="{'towards-up':true,'towards-active':rightInfo.length }" @click="towardsUp()">
+                            <i class="el-icon-top"></i>
+                        </div>
+                        <div :class="{'towards-down':true,'towards-active':rightInfo.length}" @click="towardsDown()">
+                            <i class="el-icon-bottom"></i>
+                        </div>
+                        <div :class="{'towards-up':true,'towards-active':rightInfo.length }" @click="preTop()">
+                            <i class="el-icon-upload2"></i>
+                        </div>
+                        <div :class="{'towards-down':true,'towards-active':rightInfo.length}" @click="preBottom()">
+                            <i class="el-icon-download"></i>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="list-items-box">
+                            <table cellspacing="0" cellpadding="0" border="0" style="width: 100%;">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div style="text-align:left;">
+                                                <el-checkbox-group v-model="rightInfo" @change='rightChange'>
+                                                    <div v-for="item in rightData.list">
+                                                        <el-checkbox :label="item" :key="item" :value="item">
+                                                        {{item}}
+                                                        </el-checkbox>
+                                                    </div>
+                                                </el-checkbox-group>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="personalization-button" style="margin-top: 20px;text-align: right;">
+            <!-- <el-button type="text" @click="dialogClose()" size="small">取 消</el-button> -->
+            <el-button type="primary" @click="onSubmit()" size="small">保 存</el-button>
+        </div>
+    </div>
+</div>
+</template>
+<script>
+import { axiosInstance } from "tools/axiosInstance";
+import api from "../../api";
+
+export default {
+    data() {
+        const generateData = _ => {
+            const data = [];
+            for (let i = 1; i <= 15; i++) {
+                data.push({
+                    key: i,
+                    label: `备选项 ${i}`,
+                    disabled: i % 4 === 0
+                });
+            }
+            return data;
+        };
+        return {
+            leftCheckAll: false,
+            rightCheckAll: false,
+            leftInfo: [], //左边选中数据
+            rightInfo: [], //右边选中数据
+            input: "",
+            leftData: {
+                title: "可选机位",
+                count: 0,
+                // list: []
+                list: [125,52,36,96,366,15,633,569,89,76,55]
+            },
+            rightData: {
+                title: "显示机位",
+                count: 0,
+                list: []
+            },
+            dialogVisible: false,
+            data: generateData(),
+            value: [1],
+            value4: [1],
+            renderFunc(h, option) {
+                return (
+                <span>
+                    {option.key} - {option.label}
+                </span>
+                );
+            }
+        };
+    },
+    mounted() {
+        // this.getCraftsiteCode();
+        // this.getCraftSeatCustom();
+    },
+    methods: {
+        //获取左边穿梭框
+        getCraftsiteCode() {
+            const self = this;
+            var userAccount = this.$store.state.userAccount;
+            const config = {
+                method: "get",
+                url: api.craftsitecode,
+                showLoading: false
+            };
+            axiosInstance(config).then(function(res) {
+                if (!res.data.success) {
+                    self.$Message.error(res.data.msg);
+                    return;
+                }
+                self.leftData.list = [];
+                if (res.data.data && res.data.data.length > 0) {
+                    let list = [];
+                    //将左边数据在右边已存在的过滤掉
+                    res.data.data.map(item => {
+                        if (!self.rightData.list.some(i => i == item)) {
+                            list.push(item);
+                        }
+                    });
+                    self.leftData.list = list;
+                }
+            });
+        },
+        getCraftSeatCustom() {
+            const self = this;
+            var userAccount = this.$store.state.userAccount;
+            const config = {
+                method: "get",
+                url:
+                api.craftSeatcustom +
+                `?userAccount=${userAccount}&configName=displayList`,
+                showLoading: false
+            };
+            axiosInstance(config).then(function(res) {
+                if (!res.data.success) {
+                    self.$Message.error(res.data.message);
+                    return;
+                }
+                self.rightData.list = [];
+                if (res.data.data && res.data.data.length > 0) {
+                    self.rightData.list = res.data.data;
+                    self.getCraftsiteCode();
+                }
+            });
+        },
+        towardsLeft() {
+            const self = this;
+            if (self.rightInfo.length <= 0) {
+                return;
+            }
+            var len = self.rightInfo.length;
+            var index =
+                self.input !== ""
+                ? self.leftData.list.findIndex(t => t.toString() === self.input)
+                : -1;
+            var afterlist =
+                index >= 0
+                ? self.leftData.list.splice(index + 1, self.leftData.list.length)
+                : [];
+
+            for (var i = 0; i < len; i++) {
+                self.leftData.list.push(self.rightInfo[i]);
+            }
+            if (index >= 0) {
+                for (var i = 0; i < afterlist.length; i++) {
+                self.leftData.list.push(afterlist[i]);
+                }
+            }
+
+            for (var i = 0; i < (len && self.rightInfo.length > 0); i++) {
+                var index = self.rightData.list.findIndex(t => t === self.rightInfo[i]);
+                if (index >= 0) {
+                    self.rightData.list.splice(index, 1);
+                }
+                self.rightInfo.splice(i, 1);
+                i--;
+            }
+        },
+        //往右穿梭数据
+        towardsRight() {
+            const self = this;
+            let { input, leftInfo, rightData, leftData } = this;
+            if (self.leftInfo.length <= 0) {
+                return;
+            }
+            if (!input && leftInfo.length) {
+                leftInfo.map((item, key) => {
+                this.rightData.list.push(item);
+                let index = this.leftData.list.findIndex(i => item == i);
+                console.log(index);
+                this.leftData.list.splice(index, 1);
+                });
+                this.leftInfo = [];
+                return;
+            }
+            if (input && !rightData.list.some(item => item == input)) {
+                leftInfo.map((item, key) => {
+                this.rightData.list.push(item);
+                let index = this.leftData.list.findIndex(i => item == i);
+                this.leftData.list.splice(index, 1);
+                });
+                this.leftInfo = [];
+                return;
+            }
+            let index = rightData.list.findIndex(item => item == input);
+            this.rightData.list.splice(index + 1, 0, ...leftInfo);
+            leftInfo.map((item, key) => {
+                let leftIndex = this.leftData.list.findIndex(it => it == item);
+                this.leftData.list.splice(leftIndex, 1);
+            });
+            this.leftInfo = [];
+        },
+        towardsUp() {
+            var self = this;
+            var { rightData, rightInfo } = this;
+
+            if (rightInfo.length) {
+                rightInfo.map(item => {
+                    let index = this.rightData.list.findIndex(it => it == item);
+                    if (index) {
+                        console.log(index);
+                        console.log(rightInfo);
+                        this.rightData.list.splice(
+                            index,
+                            1,
+                            ...this.rightData.list.splice(
+                                index - 1,
+                                1,
+                                this.rightData.list[index]
+                            )
+                        );
+                    }
+                });
+            }
+        },
+        towardsDown() {
+            var self = this;
+            var { rightData, rightInfo } = this;
+
+            if (rightInfo.length) {
+                console.log(rightInfo.reverse());
+                rightInfo.map(item => {
+                let index = this.rightData.list.findIndex(it => it == item);
+                if (index != rightData.list.length) {
+                    //     console.log(1);
+                    this.rightData.list.splice(
+                    index,
+                    1,
+                    ...this.rightData.list.splice(
+                        index + 1,
+                        1,
+                        this.rightData.list[index]
+                    )
+                    );
+                }
+                });
+            }
+        },
+        preTop() {
+            var { rightData, rightInfo } = this;
+            if (rightInfo.length) {
+                rightInfo.reverse().map(item => {
+                    let index = this.rightData.list.findIndex(it => it == item);
+                    this.rightData.list.splice(index, 1);
+                    this.rightData.list.unshift(item);
+                });
+            }
+        },
+        preBottom() {
+            var { rightData, rightInfo } = this;
+            var { rightData, rightInfo } = this;
+            if (rightInfo.length) {
+                rightInfo.reverse().map(item => {
+                    let index = this.rightData.list.findIndex(it => it == item);
+                    this.rightData.list.splice(index, 1);
+                    this.rightData.list.push(item);
+                });
+            }
+        },
+        handleSelected() {
+            // this.dialogVisible = true;
+            this.getCraftsiteCode();
+            this.getCraftSeatCustom();
+        },
+        handleCheckedLeftChange() {
+            var self = this;
+            self.leftInfo = [];
+            if (self.leftCheckAll === true) {
+                self.leftData.list.forEach(function(d) {
+                self.leftInfo.push(d);
+                });
+            }
+        },
+        handleCheckedRightChange() {
+            var self = this;
+            self.rightInfo = [];
+            if (self.rightCheckAll === true) {
+                self.rightData.list.forEach(function(d) {
+                self.rightInfo.push(d);
+                });
+            }
+        },
+        dialogClose() {
+        this.dialogVisible = false;
+        },
+
+        rightChange(val) {
+            let { rightData, rightInfo } = this;
+            let list = [];
+            rightData.list.map(item => {
+                if (rightInfo.includes(item)) {
+                list.push(item);
+                }
+            });
+            this.rightInfo = list;
+            // console.log(val);
+            // console.log(this.rightInfo);
+        },
+        onSubmit() {
+            const self = this;
+            var displayList = self.rightData.list.join(",");
+            var userAccount = this.$store.state.userAccount;
+            const config = {
+                method: "post",
+                url:
+                api.craftSeatcustom +
+                `?userAccount=${userAccount}&displayList=${displayList}`,
+                showLoading: false
+            };
+            axiosInstance(config).then(function(res) {
+                if (!res.data.success) {
+                    self.$Message.error(res.data.msg);
+                    return;
+                }
+                if (res.data.data && res.data.data.length > 0) {
+                    self.rightData.list = res.data.data;
+                }
+                // self.dialogVisible = false;
+                location.reload();
+            });
+        }
+    }
+};
+</script>
+<style lang="less">
+.box {
+    width: 500px;
+}
+.personalization {
+    width: 100%;
+}
+
+.personalization-container {
+    margin-left: 50px;
+    user-select: none;
+    padding: 10px 0 30px;
+    /deep/.el-button--primary {
+        margin-right: 30px;
+    }
+
+    .personalization-button {
+        margin-top: 10px;
+        margin-left: 65%;
+        text-align: right;
+    }
+
+    .title {
+        display: flex;
+        align-items: center;
+        margin: 20px 0;
+        h2 {
+            display: inline-block;
+            margin-right: 40px;
+        }
+    }
+
+    .el-switch__label {
+        width: 130px;
+        color: #495060;
+    }
+
+    .el-switch {
+        display: block;
+        margin-top: 20px;
+    }
+
+    .slider {
+        margin-top: 30px;
+            h3 {
+            margin-bottom: 10px;
+            }
+
+        .block {
+            display: flex;
+            align-items: center;
+            .demonstration {
+                width: 130px;
+            }
+
+            .el-slider {
+                display: inline-block;
+                width: 200px;
+            }
+        }
+
+        .mt {
+            margin-bottom: 20px;
+        }
+    }
+
+    .title {
+        margin: 20px 30px;
+        display: inline-block;
+        height: 40px;
+        line-height: 40px;
+        vertical-align: top;
+    }
+
+    .value {
+        font-size: 44px;
+        margin: 20px 14px;
+        display: inline-block;
+        line-height: 40px;
+        height: 40px;
+        vertical-align: top;
+    }
+
+    .handle {
+        color: #2d8cf0;
+        display: inline-block;
+        height: 40px;
+        line-height: 48px;
+        vertical-align: top;
+        margin: 20px 30px;
+    }
+
+    .handle:hover {
+        text-decoration: underline;
+    }
+}
+
+.ivu-modal-header {
+    border-bottom: 0px;
+}
+
+.center {
+    text-align: center;
+}
+
+.list-title-box {
+    width: 100%;
+    padding: 6px 6px;
+    background: #f5f7f9;
+    border: 1px solid #dddee1;
+    color: black;
+    font-size: 16px;
+}
+
+.list-items-box {
+    padding: 6px 6px;
+    border: 1px solid #dddee1;
+    border-top: 0;
+    height: 314px;
+    overflow-y: auto;
+}
+
+.towards-left,
+.towards-right,
+.towards-up,
+.towards-down {
+    text-align: center;
+    border-radius: 20px;
+    border: 1px solid #dddee1;
+    width: 40px;
+    margin: 0 auto;
+    margin-top: -15px;
+    margin-bottom: 20px;
+    height: 40px;
+    line-height: 40px;
+    cursor: pointer;
+}
+.towards-input {
+    text-align: center;
+    border-radius: 20px;
+    // border: 1px solid #dddee1;
+    width: 90%;
+    margin: 0 auto;
+    margin-top: -15px;
+    margin-bottom: 20px;
+    height: 40px;
+    line-height: 40px;
+    cursor: pointer;
+}
+.towards-active {
+    background: #409eff;
+    color: white;
+    border: 1px solid #3a8ee6;
+}
+</style>
